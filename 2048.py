@@ -1,5 +1,6 @@
 import random
 import streamlit as st
+import streamlit.components.v1 as components
 
 SIZE = 4
 
@@ -141,7 +142,7 @@ if "score" not in st.session_state:
 if "best" not in st.session_state:
   st.session_state.best = 0
 if "status" not in st.session_state:
-  st.session_state.status = "ready"  # ready, playing, won, over
+  st.session_state.status = "ready"
 if "continued" not in st.session_state:
   st.session_state.continued = False
 
@@ -175,33 +176,75 @@ def handle_action(direction):
     st.session_state.status = "over"
 
 
-# UI 레이아웃 구성
-st.markdown(
-    """
-    <style>
-    .stButton>button { width: 100%; border-radius: 8px; font-weight: bold; }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+# 500px 고정 폭을 위해 중앙에 컬럼 배치
+_, center_col, _ = st.columns([1, 3, 1])
 
-col_title, col_score1, col_score2 = st.columns([2, 1, 1])
-with col_title:
+with center_col:
+  # 전체 폭을 500px로 제한하는 CSS 스타일
   st.markdown(
-      "<h1 style='margin:0; padding:0;'>2048</h1>", unsafe_allow_html=True
+      """
+        <style>
+        .block-container {
+            max-width: 500px !important;
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+        .stButton>button {
+            width: 100%;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        </style>
+        """,
+      unsafe_allow_html=True,
   )
-  st.caption("같은 숫자를 합쳐 2048을 만드세요")
-with col_score1:
-  st.metric("점수", st.session_state.score)
-with col_score2:
-  st.metric("최고", st.session_state.best)
 
-st.write("")
+  # 키보드 입력 감지를 위한 브라우저 컴포넌트 연동
+  if st.session_state.status == "playing":
+    key_event = components.html(
+        """
+        <script>
+        window.addEventListener('keydown', function(e) {
+            if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," ", "w", "a", "s", "d"].indexOf(e.key) > -1) {
+                e.preventDefault();
+            }
+            const parentDoc = window.parent.document;
+            let dir = "";
+            if (e.key === "ArrowLeft" || e.key === "a") dir = "left";
+            else if (e.key === "ArrowRight" || e.key === "d") dir = "right";
+            else if (e.key === "ArrowUp" || e.key === "w") dir = "up";
+            else if (e.key === "ArrowDown" || e.key === "s") dir = "down";
 
-# 게임판 렌더링
-board_container = st.container()
-with board_container:
-  # 4x4 그리드 출력
+            if (dir) {
+                // 키 입력 시 Streamlit의 특정 상호작용 트리거 역할
+                const buttons = parentDoc.querySelectorAll('button');
+                buttons.forEach(btn => {
+                    if (btn.innerText.includes(dir === 'up' ? '⬆️' : dir === 'left' ? '⬅️' : dir === 'down' ? '⬇️' : '➡️')) {
+                        btn.click();
+                    }
+                });
+            }
+        });
+        </script>
+        """,
+        height=0,
+    )
+
+  col_title, col_score1, col_score2 = st.columns([2, 1, 1])
+  with col_title:
+    st.markdown(
+        "<h1 style='margin:0; padding:0; font-size: 2rem;'>2048</h1>",
+        unsafe_allow_html=True,
+    )
+    st.caption("방향키 또는 버튼으로 조작")
+  with col_score1:
+    st.metric("점수", st.session_state.score)
+  with col_score2:
+    st.metric("최고", st.session_state.best)
+
+  st.write("")
+
+  # 게임판 렌더링
   for r in range(SIZE):
     cols = st.columns(SIZE)
     for c in range(SIZE):
@@ -216,7 +259,7 @@ with board_container:
           txt = TILE_TEXT_COLORS.get(val, "#1A1206")
           display_val = str(val)
 
-        font_size = "20px" if val >= 1000 else ("24px" if val >= 100 else "28px")
+        font_size = "18px" if val >= 1000 else ("22px" if val >= 100 else "26px")
 
         st.markdown(
             f"""
@@ -227,65 +270,65 @@ with board_container:
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    border-radius: 10px;
+                    border-radius: 8px;
                     font-size: {font_size};
                     font-weight: 800;
-                    margin-bottom: 8px;
+                    margin-bottom: 6px;
                 ">{display_val}</div>
                 """,
             unsafe_allow_html=True,
         )
 
-# 상태별 오버레이 및 조작 버튼
-if st.session_state.status == "ready":
-  st.warning("게임을 시작하려면 아래 버튼을 누르세요.")
-  if st.button("게임 시작", type="primary"):
-    start_game()
-    st.rerun()
-
-elif st.session_state.status == "playing":
-  st.write("### 방향 이동")
-  b1, b2, b3 = st.columns(3)
-  with b2:
-    if st.button("⬆️ 위로"):
-      handle_action("up")
-      st.rerun()
-
-  b4, b5, b6 = st.columns(3)
-  with b4:
-    if st.button("⬅️ 왼쪽"):
-      handle_action("left")
-      st.rerun()
-  with b5:
-    if st.button("⬇️ 아래로"):
-      handle_action("down")
-      st.rerun()
-  with b6:
-    if st.button("➡️ 오른쪽"):
-      handle_action("right")
-      st.rerun()
-
-elif st.session_state.status == "won":
-  st.success("🎉 2048 달성!")
-  col_w1, col_w2 = st.columns(2)
-  with col_w1:
-    if st.button("계속하기"):
-      st.session_state.continued = True
-      st.session_state.status = "playing"
-      st.rerun()
-  with col_w2:
-    if st.button("새 게임"):
+  # 상태별 오버레이 및 조작 버튼
+  if st.session_state.status == "ready":
+    st.warning("게임을 시작하려면 아래 버튼을 누르세요.")
+    if st.button("게임 시작", type="primary"):
       start_game()
       st.rerun()
 
-elif st.session_state.status == "over":
-  st.error("💀 게임 오버!")
-  if st.button("다시 시작", type="primary"):
-    start_game()
-    st.rerun()
+  elif st.session_state.status == "playing":
+    st.write("### 방향 조작")
+    b1, b2, b3 = st.columns(3)
+    with b2:
+      if st.button("⬆️ 위로"):
+        handle_action("up")
+        st.rerun()
 
-if st.session_state.status != "ready":
-  st.write("")
-  if st.button("초기화 (새 게임)"):
-    start_game()
-    st.rerun()
+    b4, b5, b6 = st.columns(3)
+    with b4:
+      if st.button("⬅️ 왼쪽"):
+        handle_action("left")
+        st.rerun()
+    with b5:
+      if st.button("⬇️ 아래로"):
+        handle_action("down")
+        st.rerun()
+    with b6:
+      if st.button("➡️ 오른쪽"):
+        handle_action("right")
+        st.rerun()
+
+  elif st.session_state.status == "won":
+    st.success("🎉 2048 달성!")
+    col_w1, col_w2 = st.columns(2)
+    with col_w1:
+      if st.button("계속하기"):
+        st.session_state.continued = True
+        st.session_state.status = "playing"
+        st.rerun()
+    with col_w2:
+      if st.button("새 게임"):
+        start_game()
+        st.rerun()
+
+  elif st.session_state.status == "over":
+    st.error("💀 게임 오버!")
+    if st.button("다시 시작", type="primary"):
+      start_game()
+      st.rerun()
+
+  if st.session_state.status != "ready":
+    st.write("")
+    if st.button("초기화 (새 게임)"):
+      start_game()
+      st.rerun()

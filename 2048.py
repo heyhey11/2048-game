@@ -176,7 +176,13 @@ def handle_action(direction):
     st.session_state.status = "over"
 
 
-# 전체 레이아웃 너비 800px 설정 CSS
+# URL 쿼리 파라미터 기반 키 입력 처리
+if "move" in st.query_params and st.session_state.status == "playing":
+  direction = st.query_params["move"]
+  st.query_params.clear()
+  handle_action(direction)
+
+# 레이아웃 스타일 설정 (800px)
 st.markdown(
     """
     <style>
@@ -197,31 +203,32 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# 키보드 이벤트 캡처 스크립트
+# 키보드 이벤트 리스너 주입
 if st.session_state.status == "playing":
   components.html(
       """
     <script>
-    window.addEventListener('keydown', function(e) {
-        if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," ", "w", "a", "s", "d"].indexOf(e.key) > -1) {
-            e.preventDefault();
-        }
-        const parentDoc = window.parent.document;
-        let dir = "";
-        if (e.key === "ArrowLeft" || e.key === "a") dir = "left";
-        else if (e.key === "ArrowRight" || e.key === "d") dir = "right";
-        else if (e.key === "ArrowUp" || e.key === "w") dir = "up";
-        else if (e.key === "ArrowDown" || e.key === "s") dir = "down";
+    const parentWin = window.parent;
+    if (!parentWin._keyListenerInitialized) {
+        parentWin._keyListenerInitialized = true;
+        parentWin.addEventListener('keydown', function(e) {
+            if(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " ", "w", "a", "s", "d", "W", "A", "S", "D"].includes(e.key)) {
+                e.preventDefault();
+                let dir = "";
+                const key = e.key.toLowerCase();
+                if (e.key === "ArrowLeft" || key === "a") dir = "left";
+                else if (e.key === "ArrowRight" || key === "d") dir = "right";
+                else if (e.key === "ArrowUp" || key === "w") dir = "up";
+                else if (e.key === "ArrowDown" || key === "s") dir = "down";
 
-        if (dir) {
-            const buttons = parentDoc.querySelectorAll('button');
-            buttons.forEach(btn => {
-                if (btn.innerText.includes(dir === 'up' ? '⬆️' : dir === 'left' ? '⬅️' : dir === 'down' ? '⬇️' : '➡️')) {
-                    btn.click();
+                if (dir) {
+                    const url = new URL(parentWin.location);
+                    url.searchParams.set('move', dir);
+                    parentWin.location.href = url.toString();
                 }
-            });
-        }
-    });
+            }
+        });
+    }
     </script>
     """,
       height=0,
@@ -234,7 +241,7 @@ with col_title:
       "<h1 style='margin:0; padding:0; font-size: 2.5rem;'>2048</h1>",
       unsafe_allow_html=True,
   )
-  st.caption("키보드 방향키(←, →, ↑, ↓) 또는 조작 버튼으로 이용 가능합니다.")
+  st.caption("키보드 방향키(←, →, ↑, ↓) 또는 WASD로 조작하세요.")
 with col_score1:
   st.metric("점수", st.session_state.score)
 with col_score2:
@@ -242,7 +249,7 @@ with col_score2:
 
 st.write("")
 
-# 게임판 렌더링 (800px 크기에 맞춰 타일 및 폰트 가독성 증대)
+# 게임판 렌더링
 for r in range(SIZE):
   cols = st.columns(SIZE)
   for c in range(SIZE):
@@ -280,7 +287,7 @@ for r in range(SIZE):
 
 st.write("")
 
-# 상태 제어 및 조작부
+# 상태 제어 및 버튼 (보조용)
 if st.session_state.status == "ready":
   st.warning("게임을 시작하려면 아래 버튼을 누르세요.")
   if st.button("게임 시작", type="primary"):
@@ -290,21 +297,21 @@ if st.session_state.status == "ready":
 elif st.session_state.status == "playing":
   b1, b2, b3 = st.columns(3)
   with b2:
-    if st.button("⬆️ 위로"):
+    if st.button("⬆️ 위로 (W)"):
       handle_action("up")
       st.rerun()
 
   b4, b5, b6 = st.columns(3)
   with b4:
-    if st.button("⬅️ 왼쪽"):
+    if st.button("⬅️ 왼쪽 (A)"):
       handle_action("left")
       st.rerun()
   with b5:
-    if st.button("⬇️ 아래로"):
+    if st.button("⬇️ 아래로 (S)"):
       handle_action("down")
       st.rerun()
   with b6:
-    if st.button("➡️ 오른쪽"):
+    if st.button("➡️ 오른쪽 (D)"):
       handle_action("right")
       st.rerun()
 

@@ -36,10 +36,10 @@ game_html = """
             justify-content: flex-start;
         }
         .game-container {
-            width: 420px;
+            width: 400px;
             background: #bbada0;
             border-radius: 10px;
-            padding: 12px;
+            padding: 10px;
             position: relative;
             box-sizing: border-box;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
@@ -48,25 +48,25 @@ game_html = """
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         .scores {
             display: flex;
-            gap: 8px;
+            gap: 6px;
         }
         .score-box {
             background: #8f7a66;
-            padding: 6px 12px;
-            border-radius: 5px;
+            padding: 4px 10px;
+            border-radius: 4px;
             text-align: center;
             color: white;
             font-weight: bold;
-            font-size: 13px;
-            min-width: 50px;
+            font-size: 12px;
+            min-width: 45px;
         }
         .score-box span {
             display: block;
-            font-size: 16px;
+            font-size: 15px;
         }
         .board-wrapper {
             position: relative;
@@ -74,9 +74,9 @@ game_html = """
         .grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
+            gap: 8px;
             background: #cdc1b4;
-            padding: 10px;
+            padding: 8px;
             border-radius: 6px;
         }
         .tile {
@@ -86,7 +86,7 @@ game_html = """
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 22px;
             font-weight: bold;
             color: #776e65;
         }
@@ -96,33 +96,32 @@ game_html = """
         .tile-16 { background: #f59563; color: #f9f6f2; }
         .tile-32 { background: #f67c5f; color: #f9f6f2; }
         .tile-64 { background: #f65e3b; color: #f9f6f2; }
-        .tile-128 { background: #edcf72; color: #f9f6f2; font-size: 22px; }
-        .tile-256 { background: #edcc61; color: #f9f6f2; font-size: 22px; }
-        .tile-512 { background: #edc850; color: #f9f6f2; font-size: 22px; }
-        .tile-1024 { background: #edc53f; color: #f9f6f2; font-size: 18px; }
-        .tile-2048 { background: #edc22e; color: #f9f6f2; font-size: 18px; }
+        .tile-128 { background: #edcf72; color: #f9f6f2; font-size: 20px; }
+        .tile-256 { background: #edcc61; color: #f9f6f2; font-size: 20px; }
+        .tile-512 { background: #edc850; color: #f9f6f2; font-size: 20px; }
+        .tile-1024 { background: #edc53f; color: #f9f6f2; font-size: 16px; }
+        .tile-2048 { background: #edc22e; color: #f9f6f2; font-size: 16px; }
 
         .overlay {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(238, 228, 218, 0.9);
+            background: rgba(238, 228, 218, 0.92);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            border-radius: 10px;
+            border-radius: 6px;
             z-index: 10;
         }
         .overlay h2 {
             color: #776e65;
-            margin-bottom: 12px;
-            font-size: 22px;
+            margin-bottom: 10px;
+            font-size: 20px;
         }
         .controls {
-            margin-top: 10px;
+            margin-top: 8px;
             display: flex;
             justify-content: center;
-            gap: 10px;
         }
         button {
             background: #8f7a66;
@@ -141,7 +140,7 @@ game_html = """
 
 <div class="game-container">
     <div class="header">
-        <div style="font-size: 24px; font-weight: bold; color: #776e65;">2048</div>
+        <div style="font-size: 22px; font-weight: bold; color: #776e65;">2048</div>
         <div class="scores">
             <div class="score-box">점수 <span id="score">0</span></div>
             <div class="score-box">최고 <span id="best">0</span></div>
@@ -351,4 +350,4 @@ game_html = """
 </html>
 """
 
-components.html(game_html, height=480)
+components.html(game_html, height=560)

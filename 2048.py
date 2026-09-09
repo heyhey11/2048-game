@@ -1,7 +1,6 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# 전체 레이아웃 너비 설정 (800px)
 st.markdown(
     """
     <style>
@@ -19,11 +18,8 @@ st.markdown(
     "<h1 style='margin:0; padding:0; font-size: 2rem;'>2048 게임</h1>",
     unsafe_allow_html=True,
 )
-st.caption(
-    "키보드 방향키(←, →, ↑, ↓) 또는 화면의 버튼을 눌러 게임을 즐기세요."
-)
+st.caption("게임 시작 버튼을 누르고 키보드 방향키로 조작하세요.")
 
-# 완벽한 키보드 조작과 반응형 처리를 위한 HTML/JS 2048 게임 컴포넌트
 game_html = """
 <!DOCTYPE html>
 <html>
@@ -59,7 +55,6 @@ game_html = """
             gap: 10px;
         }
         .score-box {
-            background: #bbada0;
             background: #8f7a66;
             padding: 8px 15px;
             border-radius: 5px;
@@ -73,11 +68,13 @@ game_html = """
             display: block;
             font-size: 18px;
         }
+        .board-wrapper {
+            position: relative;
+        }
         .grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 12px;
-            background: #bbada0;
             background: #cdc1b4;
             padding: 12px;
             border-radius: 6px;
@@ -93,7 +90,6 @@ game_html = """
             font-weight: bold;
             color: #776e65;
         }
-        /* Tile Colors */
         .tile-2 { background: #eee4da; color: #776e65; }
         .tile-4 { background: #ede0c8; color: #776e65; }
         .tile-8 { background: #f2b179; color: #f9f6f2; }
@@ -106,6 +102,22 @@ game_html = """
         .tile-1024 { background: #edc53f; color: #f9f6f2; font-size: 20px; }
         .tile-2048 { background: #edc22e; color: #f9f6f2; font-size: 20px; }
 
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(238, 228, 218, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            z-index: 10;
+        }
+        .overlay h2 {
+            color: #776e65;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
         .controls {
             margin-top: 15px;
             display: flex;
@@ -135,9 +147,17 @@ game_html = """
             <div class="score-box">최고 <span id="best">0</span></div>
         </div>
     </div>
-    <div class="grid" id="grid"></div>
+    
+    <div class="board-wrapper">
+        <div class="grid" id="grid"></div>
+        <div class="overlay" id="overlay">
+            <h2 id="overlay-text">준비되셨나요?</h2>
+            <button onclick="startGame()">게임 시작</button>
+        </div>
+    </div>
+
     <div class="controls">
-        <button onclick="restartGame()">새 게임</button>
+        <button onclick="startGame()">새 게임</button>
     </div>
 </div>
 
@@ -146,10 +166,26 @@ game_html = """
     let board = [];
     let score = 0;
     let best = localStorage.getItem('best_2048') || 0;
+    let isPlaying = false;
 
-    function initGame() {
+    function renderEmptyBoard() {
+        const gridEl = document.getElementById('grid');
+        gridEl.innerHTML = '';
+        for(let r=0; r<SIZE; r++) {
+            for(let c=0; c<SIZE; c++) {
+                let tile = document.createElement('div');
+                tile.className = 'tile';
+                gridEl.appendChild(tile);
+            }
+        }
+        document.getElementById('best').innerText = best;
+    }
+
+    function startGame() {
         board = Array(SIZE).fill(0).map(() => Array(SIZE).fill(0));
         score = 0;
+        isPlaying = true;
+        document.getElementById('overlay').style.display = 'none';
         addRandomTile();
         addRandomTile();
         updateView();
@@ -181,11 +217,22 @@ game_html = """
             }
         }
         document.getElementById('score').innerText = score;
-        document.getElementById('best').innerText = best;
         if(score > best) {
             best = score;
             localStorage.setItem('best_2048', best);
         }
+        document.getElementById('best').innerText = best;
+    }
+
+    function checkGameOver() {
+        for(let r=0; r<SIZE; r++) {
+            for(let c=0; c<SIZE; c++) {
+                if(board[r][c] === 0) return false;
+                if(c < SIZE - 1 && board[r][c] === board[r][c+1]) return false;
+                if(r < SIZE - 1 && board[r][c] === board[r+1][c]) return false;
+            }
+        }
+        return true;
     }
 
     function slide(row) {
@@ -275,11 +322,8 @@ game_html = """
         return moved;
     }
 
-    function restartGame() {
-        initGame();
-    }
-
     window.addEventListener('keydown', e => {
+        if(!isPlaying) return;
         if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key)) {
             e.preventDefault();
         }
@@ -292,10 +336,15 @@ game_html = """
         if(moved) {
             addRandomTile();
             updateView();
+            if(checkGameOver()) {
+                isPlaying = false;
+                document.getElementById('overlay-text').innerText = "게임 오버!";
+                document.getElementById('overlay').style.display = 'flex';
+            }
         }
     });
 
-    initGame();
+    renderEmptyBoard();
 </script>
 
 </body>
